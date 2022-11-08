@@ -1,22 +1,24 @@
 # %%
 import os
 import math
+from scipy.stats import t, norm, normaltest
+import numpy as np
 import matplotlib.pyplot as plt
 import General_Distribution as General_Distribution
 
-# %%
-
 class Gaussian(General_Distribution.Distribution):
 
-    def __init__(self, mean: float = 0, stdev: float = 0, file_name: str or None = None) -> None:
+    def __init__(self, mean: float = 0, stdev: float = 0, n: int or None = 25, file_name: str or None = None) -> None:
         
         if file_name:
             self.data = self.read_data_file(file_name)
-            self.n = len(self.data)
-            General_Distribution.Distribution.__init__(self, self.calculate_mean(False), self.calculate_stdev(False))
+            self.analyze_data_set()
+            General_Distribution.Distribution.__init__(self, self.calculate_mean(sample=True), self.calculate_stdev(sample=True))
         else:
             General_Distribution.Distribution.__init__(self, mean, stdev)
-        
+            self.data = np.random.normal(mean, stdev, size=n)
+            self.analyze_data_set()
+
         """ 
             Class to calculate and visualize a Gaussian distributions
         
@@ -33,7 +35,8 @@ class Gaussian(General_Distribution.Distribution):
             Method to populate the variables of the Gaussian class based on the loaded data set
 
             Args:
-                None
+                sample (bool): flag whether the data represents the sample 
+                or population.
 
             Returns:
                 float: the mean of the data set
@@ -41,14 +44,11 @@ class Gaussian(General_Distribution.Distribution):
                 int: the number of observations in the dataset
 
         """
-        if self.data:
-            self.n = len(self.data)
-            self.mean = self.calculate_mean(sample)
-            self.stdev = self.calculate_stdev(sample)
-        else:
-            print('Please load the data using the ".read_data_file()" method')
-        
-        return self.mean, self.stdev#, self.n
+        self.n = len(self.data)
+        self.stdev = self.calculate_stdev(sample)
+        self.mean = self.calculate_mean(sample)
+
+        return self.mean, self.stdev, self.n
 
     def calculate_mean(self, sample: bool = True) -> float:
 
@@ -67,10 +67,14 @@ class Gaussian(General_Distribution.Distribution):
         if sample:
             _mean = sum(self.data)/len(self.data) * 1.0
         else:
-            # Estimate the population mean
-            _mean = sum(self.data)/len(self.data) * 1.0
-            # pass
-
+            statistic, p_value = normaltest(self.data, nan_policy='omit')
+            test_statistic = 1e-3
+            if (p_value < test_statistic or self.n < 30) and self.n >= 20:
+                _mean = t.interval(alpha=0.90, df=(self.n - 1), loc=self.mean, scale=self.stdev)
+            elif (p_value < test_statistic or self.n > 30) and self.n >= 20:
+                _mean = norm.interval(alpha=0.90, loc=self.mean, scale=self.stdev)
+            else:
+                raise ValueError(f"Could not estimate the parameters of this data set. N ({self.n}) must be >= 20")
         return _mean
 
     def calculate_stdev(self, sample: bool = True) -> float:
@@ -87,15 +91,15 @@ class Gaussian(General_Distribution.Distribution):
         """
 
         if sample:
-            n = self.n - 1            
+            _n = self.n - 1            
         else:
-            n = self.n
+            _n = self.n
 
-        _mean = self.calculate_mean(sample)
+        _mean = sum(self.data)/len(self.data) * 1.0
         
-        stdev = math.sqrt(sum([(x - _mean) ** 2 for x in self.data]) / n)
+        _stdev = math.sqrt(sum([(x - _mean) ** 2 for x in self.data]) / _n)
      
-        return stdev      
+        return _stdev      
     
     def plot_histogram(self) -> None:
         """
@@ -127,6 +131,9 @@ class Gaussian(General_Distribution.Distribution):
         
         """
 
+        # Convert back to the sample parameters
+        self.analyze_data_set(True)
+
         return (1.0 / (self.stdev * math.sqrt(2*math.pi))) * math.exp(-0.5*((x - self.mean) / self.stdev) ** 2)
     
     def plot_histogram_pdf(self, n_spaces: int = 50) -> "list[float], list[float]":
@@ -143,6 +150,8 @@ class Gaussian(General_Distribution.Distribution):
                 list[float]: y values for pdf plot
 
         """
+        # Convert back to the sample parameters
+        self.analyze_data_set(True)
 
         mean, stdev, min_range, max_range = self.mean, self.stdev, min(self.data), max(self.data)
 

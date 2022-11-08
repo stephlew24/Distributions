@@ -1,0 +1,3 @@
+matplotlib @ file:///tmp/build/80754af9/matplotlib-suite_1628003481308/work
+numpy @ file:///tmp/build/80754af9/numpy_and_numpy_base_1607448141537/work 
+scipy @ file:///tmp/build/80754af9/scipy_1616703221928/work
