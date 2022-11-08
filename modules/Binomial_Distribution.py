@@ -2,14 +2,17 @@
 import os
 import math
 import matplotlib.pyplot as plt
+from scipy.stats import bernoulli, norm
+import numpy as np
 import General_Distribution as General_Distribution
 
 class Binomial(General_Distribution.Distribution):
 
-    def __init__(self, prob: float = .5, n: int = 20, file_name: str or None = None) -> None:
+    def __init__(self, prob: float = .5, n: int = 25, file_name: str or None = None) -> None:
 
         if file_name:
             self.data = self.read_data_file(file_name)
+            self.n = len(self.data)
             General_Distribution.Distribution.__init__(self)
             self.analyze_data_set()
         else:
@@ -29,12 +32,13 @@ class Binomial(General_Distribution.Distribution):
 
         """
 
-    def analyze_data_set(self) -> 'float, float, float, int':
+    def analyze_data_set(self, sample: bool = False) -> 'float, float, float, int':
         """ 
             Method to populate the variables of the Binomial class based on the loaded data set
 
             Args:
-                None
+                sample (bool): flag if sample data approximating the distribution
+                should be generated.
 
             Returns:
                 float: the mean of the data set
@@ -42,14 +46,14 @@ class Binomial(General_Distribution.Distribution):
                 float: the probability of the positive class in the data set
                 int: the number of observations in the data set
         """
-        if self.data:
-            self.n = len(self.data)
-            self.prob = sum(self.data)/self.n * 1.0
-            self.mean = self.calculate_mean()
-            self.stdev = self.calculate_stdev()
-        else:
-            print('Please load the data using the ".read_data_file()" method')
-        
+        if sample:
+            self.data = bernoulli(self.prob).rvs(self.n)
+
+        self.n = len(self.data)    
+        self.prob = sum(self.data)/self.n * 1.0
+        self.mean = self.calculate_mean()
+        self.stdev = self.calculate_stdev()
+
         return self.mean, self.stdev, self.prob, self.n 
 
     def calculate_mean(self) -> float:
@@ -83,11 +87,11 @@ class Binomial(General_Distribution.Distribution):
 
         """
 
-        n = self.n
+        _n = self.n
     
-        stdev = math.sqrt(n * self.prob * (1-self.prob))
+        _stdev = math.sqrt(_n * self.prob * (1-self.prob))
 
-        return stdev
+        return _stdev
 
     def plot_bar(self) -> None:
         """
@@ -125,6 +129,7 @@ class Binomial(General_Distribution.Distribution):
         # b(x; n, P) = nCx * Px * (1 - P)n - x 
         # OR 
         # b(x; n, P) = { n! / [ x! (n - x)! ] } * Px * (1 - P)n - x
+        
         if x <= self.n:
             a = math.factorial(self.n)/ (math.factorial(x) * (math.factorial(self.n - x)))
             b = (self.prob ** x) * (1 - self.prob) ** (self.n - x)

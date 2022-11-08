@@ -1,14 +1,11 @@
-# %%
+# Add the Gaussian Module to the system path and import the package to test
+sys.path.insert(0, os.path.normpath(os.getcwd() + os.sep + os.pardir))
+
 import sys
 import unittest
 import datetime
 import os
-
-# Add the Gaussian Module to the system path and import the package to test
-sys.path.insert(0, os.path.normpath(os.getcwd() + os.sep + os.pardir))
 import General_Distribution as d
-
-# %%
 
 # Code for the unittest class
 class TestDistributionClass(unittest.TestCase):
@@ -25,8 +22,6 @@ class TestDistributionClass(unittest.TestCase):
         self.distribution.read_data_file('numbers_binomial.txt')
         self.assertEqual(len(self.distribution.data), 13, 'data did not load correctly')
 
-# %%
-
 # Run the test
 if __name__ == "__main__":
     
@@ -42,5 +37,3 @@ if __name__ == "__main__":
     with open(filepath, 'a') as f:
         f.write(f'Distribution - {str(datetime.datetime.now())}, {result}{new_line}')
         f.close()
-
-# %%
