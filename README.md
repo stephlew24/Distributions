@@ -10,10 +10,10 @@ import Binomial
 
 binomial = Binomial()
 
-# returns the mean
+# Returns the mean
 binomial.mean
 
-# returns the standard deviation
+# Returns the standard deviation
 binomial.stdev
 
 ## License
